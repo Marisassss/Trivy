@@ -151,8 +151,8 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          new_img="${{env.ECR_REPOSITORY}}:${{env.$IMAGE_TAG}}"
-          # sed -i 's|IMAGE_NAME|$ECR_REGISTRY/${{env.ECR_REPOSITORY}}:${{env.$IMAGE_TAG}}|g' Deployment.yaml
+          new_img="${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG}}"
+          # sed -i 's|IMAGE_NAME|$ECR_REGISTRY/${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG}}|g' Deployment.yaml
           sed -i 's/'"$ECR_REGISTRY.*"'/'"$new_img"'/g' Deployment.yaml
           kubectl apply -f Deployment.yaml
           kubectl apply -f Service.yaml
