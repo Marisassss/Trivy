@@ -81,7 +81,7 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{env.APP_NAME}}
-          IMAGE_TAG: ${{IMG_VERSIONDEV}}${{ github.run_number }}
+          IMAGE_TAG: ${{env.IMG_VERSIONDEV}}${{ github.run_number }}
 
         run: |
           new_img="$ECR_REPOSITORY:$IMAGE_TAG"
