@@ -23,69 +23,69 @@ spec:
         - name: pt-max-station-web
           # image: devuatmaxstationscicd.azurecr.io/maxstaions-front-end:D01.01.1
           image: IMAGE_NAME
-          #resources:    
+          #resources:
           #  requests:
           #    memory: "64Mi"
           #    cpu: "250m"
           #  limits:
           #    memory: "500Mi"
-          #    cpu: "500m"            
+          #    cpu: "500m"
           volumeMounts:
-          - name: azurefileshare
-            mountPath: /app/AppLogs
+            - name: azurefileshare
+              mountPath: /app/AppLogs
           env:
-          - name: APP_VERSION
-            # value: devuatmaxstationscicd.azurecr.io/maxstaions-front-end:D01.01.1
-            value: IMAGE_NAME
-          - name: FinanceApi
-            valueFrom:
-              secretKeyRef:
-                name: web-api-credentials
-                key: finance_api
-          - name: InventoryApi
-            valueFrom:
-              secretKeyRef:
-                name: web-api-credentials
-                key: inventory_api
-          - name: MasterdataApi
-            valueFrom:
-              secretKeyRef:
-                name: web-api-credentials
-                key: masterdata_api 
-          - name: PostdayApi
-            valueFrom:
-              secretKeyRef:
-                name: web-api-credentials
-                key: postday_api 
-          - name: PriceApi
-            valueFrom:
-              secretKeyRef:
-                name: web-api-credentials
-                key: price_api 
-          - name: ReportApi
-            valueFrom:
-              secretKeyRef:
-                name: web-api-credentials
-                key: report_api 
-          - name: SaleApi
-            valueFrom:
-              secretKeyRef:
-                name: web-api-credentials
-                key: sale_api 
-          - name: TransferdataApi
-            valueFrom:
-              secretKeyRef:
-                name: web-api-credentials
-                key: transferdata_api  
-          - name: TZ
-            value: "Asia/Bangkok"                 
-          imagePullPolicy: Always                
+            - name: APP_VERSION
+              # value: devuatmaxstationscicd.azurecr.io/maxstaions-front-end:D01.01.1
+              value: IMAGE_NAME
+            - name: FinanceApi
+              valueFrom:
+                secretKeyRef:
+                  name: web-api-credentials
+                  key: finance_api
+            - name: InventoryApi
+              valueFrom:
+                secretKeyRef:
+                  name: web-api-credentials
+                  key: inventory_api
+            - name: MasterdataApi
+              valueFrom:
+                secretKeyRef:
+                  name: web-api-credentials
+                  key: masterdata_api
+            - name: PostdayApi
+              valueFrom:
+                secretKeyRef:
+                  name: web-api-credentials
+                  key: postday_api
+            - name: PriceApi
+              valueFrom:
+                secretKeyRef:
+                  name: web-api-credentials
+                  key: price_api
+            - name: ReportApi
+              valueFrom:
+                secretKeyRef:
+                  name: web-api-credentials
+                  key: report_api
+            - name: SaleApi
+              valueFrom:
+                secretKeyRef:
+                  name: web-api-credentials
+                  key: sale_api
+            - name: TransferdataApi
+              valueFrom:
+                secretKeyRef:
+                  name: web-api-credentials
+                  key: transferdata_api
+            - name: TZ
+              value: "Asia/Bangkok"
+          imagePullPolicy: Always
       restartPolicy: Always
-      imagePullSecrets:      
+      imagePullSecrets:
         - name: pt-max-station-registry-secret
       volumes:
         - name: azurefileshare
           azureFile:
             secretName: storage-credentials
             shareName: api-qa
-            readOnly: false        
+            readOnly: false

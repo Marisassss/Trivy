@@ -94,58 +94,82 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:dev
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest 
 
-  # approval_dev:
-  #   runs-on: ubuntu-latest
-  #   needs: [buildImage,start_approval]
-  #   steps:
-  #     - name: Manual Workflow Approval
-  #       uses: trstringer/manual-approval@v1.9.0
-  #       with:
-  #         secret: ${{ github.TOKEN }}
-  #         approvers: thavornch
-  #         minimum-approvals: 1
-  #         issue-title: "Deploying to Dev"
-  #         issue-body: "Please approve or deny the deployment to Dev"
-  #         exclude-workflow-initiator-as-approver: false
-  #         additional-approved-words: ''
-  #         additional-denied-words: ''
+  approval_dev:
+    runs-on: ubuntu-latest
+    needs: [buildImage,start_approval]
+    steps:
+      - name: Manual Workflow Approval
+        uses: trstringer/manual-approval@v1.9.0
+        with:
+          secret: ${{ github.TOKEN }}
+          approvers: thavornch
+          minimum-approvals: 1
+          issue-title: "Deploying to Dev"
+          issue-body: "Please approve or deny the deployment to Dev"
+          exclude-workflow-initiator-as-approver: false
+          additional-approved-words: ''
+          additional-denied-words: ''
 
-  # deploy-dev:
-  #   permissions:
-  #     actions: read
-  #     contents: read
-  #     id-token: write
-  #   runs-on: ubuntu-latest
-  #   needs: [approval_dev,buildImage]
-  #   steps:
-  #     # - name: Checkout code
-  #     #   uses: actions/checkout@v2
-  #     - name: Checkout code
-  #       run: |
-  #         git config --global user.email "thavorn.ch@pt.co.th"
-  #         git config --global user.name "thavornch"
-  #         git clone https://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@github.com/App-MaxStation/pt-maxstaion-test-api.git
-  #         cd pt-maxstaion-test-api
-  #         git checkout main
+  deploy-dev:
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    needs: [approval_dev,buildImage]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      # - name: Checkout code
+      #   run: |
+      #     git config --global user.email "thavorn.ch@pt.co.th"
+      #     git config --global user.name "thavornch"
+      #     git clone https://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@github.com/App-MaxStation/pt-maxstaion-test-api.git
+      #     cd pt-maxstaion-test-api
+      #     git checkout main
 
-  #     - name: Configure kubectl
-  #       run: |
-  #         cd pt-maxstaion-test-api
-  #         echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yaml
-  #         kubectl --kubeconfig=kubeconfig.yaml apply -f Common.API/Deployment.yaml
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.PTC_DEV_SIT_AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.PTC_DEV_SIT_AWS_SECRET_KEY }}
+          aws-region: ap-southeast-1
 
-  #     - name: Deploy to AKS
-  #       run: |
-  #         cd pt-maxstaion-test-api
-  #         sed -i 's|IMAGE_NAME|${{ env.REGISTRY_DOCKER }}/${{ env.APP_NAME }}:${{ env.IMG_VERSIONDEV }}${{ env.RUNNUMBER}}|g' Common.API/Deployment.yaml
-  #         cat Common.API/Deployment.yaml
-  #         kubectl --kubeconfig=kubeconfig.yaml delete -f Common.API/Deployment.yaml
-  #         kubectl --kubeconfig=kubeconfig.yaml delete -f Common.API/Service.yaml
-  #         kubectl --kubeconfig=kubeconfig.yaml delete -f Common.API/HorizontalPodAutoscaler.yaml
+      - name: Install and configure AWS CLI
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+        if: success()
 
-  #         kubectl --kubeconfig=kubeconfig.yaml apply -f Common.API/Deployment.yaml
-  #         kubectl --kubeconfig=kubeconfig.yaml apply -f Common.API/Service.yaml
-  #         kubectl --kubeconfig=kubeconfig.yaml apply -f Common.API/HorizontalPodAutoscaler.yaml
+      - name: Authenticate with EKS
+        run: aws eks --region ap-southeast-1 update-kubeconfig --name dev-sit-ptc
+        if: success()
+
+      - name: Deploy to EKS
+        run: |
+          kubectl apply -f Deployment.yaml
+          kubectl apply -f Service.yaml
+          kubectl apply -f HorizontalPodAutoscaler.yaml
+        if: success()
+      # - name: Configure kubectl
+      #   run: |
+      #     # cd pt-maxstaion-test-api
+      #     echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yaml
+      #     kubectl --kubeconfig=kubeconfig.yaml apply -f Common.API/Deployment.yaml
+
+      # - name: Deploy to AKS
+      #   run: |
+      #     # cd pt-maxstaion-test-api
+      #     sed -i 's|IMAGE_NAME|${{ env.REGISTRY_DOCKER }}/${{ env.APP_NAME }}:${{ env.IMG_VERSIONDEV }}${{ env.RUNNUMBER}}|g' Common.API/Deployment.yaml
+      #     cat Common.API/Deployment.yaml
+      #     kubectl --kubeconfig=kubeconfig.yaml delete -f Common.API/Deployment.yaml
+      #     kubectl --kubeconfig=kubeconfig.yaml delete -f Common.API/Service.yaml
+      #     kubectl --kubeconfig=kubeconfig.yaml delete -f Common.API/HorizontalPodAutoscaler.yaml
+
+      #     kubectl --kubeconfig=kubeconfig.yaml apply -f Common.API/Deployment.yaml
+      #     kubectl --kubeconfig=kubeconfig.yaml apply -f Common.API/Service.yaml
+      #     kubectl --kubeconfig=kubeconfig.yaml apply -f Common.API/HorizontalPodAutoscaler.yaml
 
   # karate_Test: 
   #   runs-on: ubuntu-latest
