@@ -43,25 +43,25 @@ jobs:
     needs: [start_approval]
     if: ${{ always() && github.event.inputs.tags == '' }}
     steps:
-      # - name: Checkout code
-      #   uses: actions/checkout@v2
       - name: Checkout code
-        run: |
-          git config --global user.email "thavorn.ch@pt.co.th"
-          git config --global user.name "thavornch"
-          git clone https://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@github.com/App-MaxStation/pt-maxstaion-test-api.git
-          cd pt-maxstaion-test-api
-          git checkout main
-          echo "Log level: ${{ github.event.inputs.logLevel }}"
-          echo "Tags: ${{ github.event.inputs.tags }}"  
+        uses: actions/checkout@v2
+      # - name: Checkout code
+      #   run: |
+      #     git config --global user.email "thavorn.ch@pt.co.th"
+      #     git config --global user.name "thavornch"
+      #     git clone https://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@github.com/App-MaxStation/pt-maxstaion-test-api.git
+      #     cd pt-maxstaion-test-api
+      #     git checkout main
+      #     echo "Log level: ${{ github.event.inputs.logLevel }}"
+      #     echo "Tags: ${{ github.event.inputs.tags }}"  
 
       # - name: docker login 
       #   run: docker login ${{ env.REGISTRY_DOCKER }} --username  ${{ env.UDOCKER }} --password ${{ env.PDOCKER }}
 
       # - name: Build Docker image
       #   run: |
-      #     cd pt-maxstaion-test-api
-      #     docker build -t ${{ env.REGISTRY_DOCKER }}/${{ env.APP_NAME }}:${{ env.IMG_VERSIONDEV }}${{ env.RUNNUMBER}} -f DockerFile.Common .
+      #     cd pt-max-station-test-repo
+      #     docker build -t ${{ env.REGISTRY_DOCKER }}/${{ env.APP_NAME }}:${{ env.IMG_VERSIONDEV }}${{ env.RUNNUMBER}} -f Dockerfile .
       
       # - name: Push Docker image
       #   run: docker push ${{ env.REGISTRY_DOCKER }}/${{ env.APP_NAME }}:${{ env.IMG_VERSIONDEV }}${{ env.RUNNUMBER}}
@@ -84,7 +84,6 @@ jobs:
           IMAGE_TAG: ${{env.IMG_VERSIONDEV}}${{ github.run_number }}
 
         run: |
-          cd pt-max-station-test-repo
           new_img="$ECR_REPOSITORY:$IMAGE_TAG"
           # sed -i 's/'"$ECR_REPOSITORY.*"'/'"$new_img"'/g' ../k8s_deployment/deployment.yaml
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile .
