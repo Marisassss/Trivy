@@ -19,8 +19,8 @@ env:
   IMG_VERSIONUAT: ${{ vars.IMG_VERSIONUAT }}
   IMG_VERSIONPRD: ${{ vars.IMG_VERSIONPRD }}
   RUNNUMBER: ${{ github.run_number }}
-  ECR_REPOSITORY: ${{env.APP_NAME}}
-  IMAGE_TAG: ${{env.IMG_VERSIONDEV}}${{ github.run_number }}
+  ECR_REPOSITORY: ${{vars.APP_NAME}}
+  IMAGE_TAG: ${{vars.IMG_VERSIONDEV}}${{ github.run_number }}
   
 jobs:
 
