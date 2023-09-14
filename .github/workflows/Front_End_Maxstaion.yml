@@ -1,0 +1,354 @@
+name: WEB Front End Maxstaion
+
+on: 
+ workflow_dispatch:
+  inputs:
+      tags:
+        description: 'Tags Image Release'
+# on:
+#   push:
+#     branches: ["master"]
+#   workflow_dispatch:
+
+env:
+  REGISTRY_DOCKER: ${{ secrets.REGISTRY_DOCKER }}
+  UDOCKER: ${{ secrets.DOCKER_USER }}
+  PDOCKER: ${{ secrets.DOCKER_PASSWORD }}
+  APP_NAME: ${{ vars.APP_NAMEFRONT }}
+  IMG_VERSIONDEV: ${{ vars.IMG_VERSIONDEV }}
+  IMG_VERSIONUAT: ${{ vars.IMG_VERSIONUAT }}
+  IMG_VERSIONPRD: ${{ vars.IMG_VERSIONPRD }}
+  RUNNUMBER: ${{ github.run_number }}
+
+  
+jobs:
+
+  start_approval:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Manual Workflow Approval
+        uses: trstringer/manual-approval@v1.9.0
+        with:
+          secret: ${{ github.TOKEN }}
+          approvers: thavornch
+          minimum-approvals: 1
+          issue-title: "Start Deploying"
+          issue-body: "Please approve or deny the Start Deploying "
+          exclude-workflow-initiator-as-approver: false
+          additional-approved-words: ''
+          additional-denied-words: ''
+
+  buildImage:
+    runs-on: ubuntu-latest
+    needs: [start_approval]
+    if: ${{ always() && github.event.inputs.tags == '' }}
+    steps:
+      # - name: Checkout code
+      #   uses: actions/checkout@v2
+      - name: Checkout code
+        run: |
+          git config --global user.email "thavorn.ch@pt.co.th"
+          git config --global user.name "thavornch"
+          git clone https://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@github.com/App-MaxStation/pt-maxstaion-test-api.git
+          cd pt-maxstaion-test-api
+          git checkout main
+          echo "Log level: ${{ github.event.inputs.logLevel }}"
+          echo "Tags: ${{ github.event.inputs.tags }}"  
+
+      # - name: docker login 
+      #   run: docker login ${{ env.REGISTRY_DOCKER }} --username  ${{ env.UDOCKER }} --password ${{ env.PDOCKER }}
+
+      # - name: Build Docker image
+      #   run: |
+      #     cd pt-maxstaion-test-api
+      #     docker build -t ${{ env.REGISTRY_DOCKER }}/${{ env.APP_NAME }}:${{ env.IMG_VERSIONDEV }}${{ env.RUNNUMBER}} -f DockerFile.Common .
+      
+      # - name: Push Docker image
+      #   run: docker push ${{ env.REGISTRY_DOCKER }}/${{ env.APP_NAME }}:${{ env.IMG_VERSIONDEV }}${{ env.RUNNUMBER}}
+
+      - name: "Configure AWS credentials"
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.SHARED_AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.SHARED_AWS_SECRET_KEY }}
+          aws-region: ap-southeast-1
+  
+      - name: "Login to Amazon ECR"
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: "Build, tag, and push image to Amazon ECR"
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{env.APP_NAME}}
+          IMAGE_TAG: ${{IMG_VERSIONDEV}}${{ github.run_number }}
+
+        run: |
+          new_img="$ECR_REPOSITORY:$IMAGE_TAG"
+          # sed -i 's/'"$ECR_REPOSITORY.*"'/'"$new_img"'/g' ../k8s_deployment/deployment.yaml
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:dev
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:dev
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest 
+
+  # approval_dev:
+  #   runs-on: ubuntu-latest
+  #   needs: [buildImage,start_approval]
+  #   steps:
+  #     - name: Manual Workflow Approval
+  #       uses: trstringer/manual-approval@v1.9.0
+  #       with:
+  #         secret: ${{ github.TOKEN }}
+  #         approvers: thavornch
+  #         minimum-approvals: 1
+  #         issue-title: "Deploying to Dev"
+  #         issue-body: "Please approve or deny the deployment to Dev"
+  #         exclude-workflow-initiator-as-approver: false
+  #         additional-approved-words: ''
+  #         additional-denied-words: ''
+
+  # deploy-dev:
+  #   permissions:
+  #     actions: read
+  #     contents: read
+  #     id-token: write
+  #   runs-on: ubuntu-latest
+  #   needs: [approval_dev,buildImage]
+  #   steps:
+  #     # - name: Checkout code
+  #     #   uses: actions/checkout@v2
+  #     - name: Checkout code
+  #       run: |
+  #         git config --global user.email "thavorn.ch@pt.co.th"
+  #         git config --global user.name "thavornch"
+  #         git clone https://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@github.com/App-MaxStation/pt-maxstaion-test-api.git
+  #         cd pt-maxstaion-test-api
+  #         git checkout main
+
+  #     - name: Configure kubectl
+  #       run: |
+  #         cd pt-maxstaion-test-api
+  #         echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yaml
+  #         kubectl --kubeconfig=kubeconfig.yaml apply -f Common.API/Deployment.yaml
+
+  #     - name: Deploy to AKS
+  #       run: |
+  #         cd pt-maxstaion-test-api
+  #         sed -i 's|IMAGE_NAME|${{ env.REGISTRY_DOCKER }}/${{ env.APP_NAME }}:${{ env.IMG_VERSIONDEV }}${{ env.RUNNUMBER}}|g' Common.API/Deployment.yaml
+  #         cat Common.API/Deployment.yaml
+  #         kubectl --kubeconfig=kubeconfig.yaml delete -f Common.API/Deployment.yaml
+  #         kubectl --kubeconfig=kubeconfig.yaml delete -f Common.API/Service.yaml
+  #         kubectl --kubeconfig=kubeconfig.yaml delete -f Common.API/HorizontalPodAutoscaler.yaml
+
+  #         kubectl --kubeconfig=kubeconfig.yaml apply -f Common.API/Deployment.yaml
+  #         kubectl --kubeconfig=kubeconfig.yaml apply -f Common.API/Service.yaml
+  #         kubectl --kubeconfig=kubeconfig.yaml apply -f Common.API/HorizontalPodAutoscaler.yaml
+
+  # karate_Test: 
+  #   runs-on: ubuntu-latest
+  #   needs: [deploy-dev]
+  #   steps:
+  #     - name: Checkout code
+  #       run: |
+  #         git config --global user.email "thavorn.ch@pt.co.th"
+  #         git config --global user.name "thavornch"
+  #         git clone https://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@github.com/App-MaxStation/pt-maxstaion-karate-Common.git
+  #         cd pt-maxstaion-karate-Common
+  #         git checkout main
+  #         java --version
+      
+  #     - name: Build and Run Karate Tests
+  #       id: my_step
+  #       run: |
+  #         cd pt-maxstaion-karate-Common
+  #         mvn test "-Dkarate.env=uat" "-Dkarate.options=--tags ~@ignore"
+  #       continue-on-error: true
+
+  #     - name: Upload HTML report
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         name: karate-report
+  #         path: ./pt-maxstaion-karate-Common/target/
+
+  #     - name: Check Karate Test Result
+  #       run: |
+  #         if [[ "${{ steps.my_step.outcome }}" == "success" ]]; then
+  #           echo "The step succeeded!"
+  #         elif [[ "${{ steps.my_step.outcome }}" == "failure" ]]; then
+  #           echo "The step failed!"
+  #           exit 1
+  #         else
+  #           echo "The step was canceled or had another outcome."
+  #         fi
+
+  # approval_UAT:
+  #   runs-on: ubuntu-latest
+  #   needs: [buildImage,karate_Test]
+  #   if: ${{ needs.karate_Test.result == 'success' }}
+  #   steps:
+  #     - name: Manual Workflow Approval
+  #       uses: trstringer/manual-approval@v1.9.0
+  #       with:
+  #         secret: ${{ github.TOKEN }}
+  #         approvers: thavornch
+  #         minimum-approvals: 1
+  #         issue-title: "Deploying to UAT"
+  #         issue-body: "Please approve or deny the deployment to UAT"
+  #         exclude-workflow-initiator-as-approver: false
+  #         additional-approved-words: ''
+  #         additional-denied-words: ''
+
+  # deploy-UAT:
+  #   permissions:
+  #     actions: read
+  #     contents: read
+  #     id-token: write
+  #   runs-on: ubuntu-latest
+  #   needs: [approval_UAT]
+  #   steps:
+  #     - name: Login to GitHub Container Registry
+  #       uses: docker/login-action@v2
+  #       with:
+  #         registry: ${{ env.REGISTRY_DOCKER }}
+  #         username: ${{ env.UDOCKER }}
+  #         password: ${{ env.PDOCKER }}
+          
+  #     - name: Docker image retag
+  #       uses: tinact/docker.image-retag@1.0.3
+  #       with:
+  #         image_name: ${{ env.APP_NAME }}
+  #         image_old_tag: ${{ env.IMG_VERSIONDEV }}${{ env.RUNNUMBER}}
+  #         image_new_tag: ${{ env.IMG_VERSIONUAT }}${{ env.RUNNUMBER}}
+  #         registry: ${{ env.REGISTRY_DOCKER }}
+  #         registry_username: ${{ env.UDOCKER }}
+  #         registry_password: ${{ env.PDOCKER }}
+
+  #     - name: Checkout code
+  #       uses: actions/checkout@v2
+
+  #     - name: Configure kubectl
+  #       run: |
+  #         echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yaml
+  #         kubectl --kubeconfig=kubeconfig.yaml apply -f Deployment.yaml
+
+  #     - name: Replace image to UAT yaml
+  #       run: | 
+  #         sed -i 's|IMAGE_NAME|${{ env.REGISTRY_DOCKER }}/${{ env.APP_NAME }}:${{ env.IMG_VERSIONUAT }}${{ env.RUNNUMBER}}|g' Deployment.yaml
+  #         cat Deployment.yaml
+
+  #     # - name: Deploy to AKS
+  #     #   run: |
+  #     #     kubectl --kubeconfig=kubeconfig.yaml apply -f Deployment.yaml
+  #     #     kubectl --kubeconfig=kubeconfig.yaml apply -f Service.yaml
+  #     #     kubectl --kubeconfig=kubeconfig.yaml apply -f HorizontalPodAutoscaler.yaml
+
+  # approval_PRD:
+  #   runs-on: ubuntu-latest
+  #   needs: [buildImage,deploy-UAT]
+  #   steps:
+  #     - name: Manual Workflow Approval
+  #       uses: trstringer/manual-approval@v1.9.0
+  #       with:
+  #         secret: ${{ github.TOKEN }}
+  #         approvers: thavornch
+  #         minimum-approvals: 1
+  #         issue-title: "Deploying to PROD"
+  #         issue-body: "Please approve or deny the deployment to PROD"
+  #         exclude-workflow-initiator-as-approver: false
+  #         additional-approved-words: ''
+  #         additional-denied-words: ''
+
+  # deploy-PRD:
+  #   permissions:
+  #     actions: read
+  #     contents: read
+  #     id-token: write
+  #   runs-on: ubuntu-latest
+  #   needs: [approval_PRD]
+  #   steps:
+  #     - name: Login to GitHub Container Registry
+  #       uses: docker/login-action@v2
+  #       with:
+  #         registry: ${{ env.REGISTRY_DOCKER }}
+  #         username: ${{ env.UDOCKER }}
+  #         password: ${{ env.PDOCKER }}
+
+  #     - name: Docker image retag
+  #       uses: tinact/docker.image-retag@1.0.3
+  #       with:
+  #         image_name: ${{ env.APP_NAME }}
+  #         image_old_tag: ${{ env.IMG_VERSIONUAT }}${{ env.RUNNUMBER}}
+  #         image_new_tag: ${{ env.IMG_VERSIONPRD }}${{ env.RUNNUMBER}}
+  #         registry: ${{ env.REGISTRY_DOCKER }}
+  #         registry_username: ${{ env.UDOCKER }}
+  #         registry_password: ${{ env.PDOCKER }}
+
+  #     - name: Checkout code
+  #       uses: actions/checkout@v2
+
+  #     - name: Configure kubectl
+  #       run: |
+  #         echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yaml
+  #         kubectl --kubeconfig=kubeconfig.yaml apply -f Deployment.yaml
+
+  #     - name: Replace image to PROD yaml
+  #       run: | 
+  #         sed -i 's|IMAGE_NAME|${{ env.REGISTRY_DOCKER }}/${{ env.APP_NAME }}:${{ env.IMG_VERSIONPRD }}${{ env.RUNNUMBER}}|g' Deployment.yaml
+  #         cat Deployment.yaml
+
+  #     # - name: Deploy to AKS
+  #     #   run: |
+  #     #     kubectl --kubeconfig=kubeconfig.yaml apply -f Deployment.yaml
+  #     #     kubectl --kubeconfig=kubeconfig.yaml apply -f Service.yaml
+  #     #     kubectl --kubeconfig=kubeconfig.yaml apply -f HorizontalPodAutoscaler.yaml
+
+  # Release:
+  #   runs-on: ubuntu-latest
+  #   needs: [start_approval]
+  #   if: ${{ always() && github.event.inputs.tags != '' }}
+  #   steps:
+  #     - name: Checkout code
+  #       run: |
+  #         git config --global user.email "thavorn.ch@pt.co.th"
+  #         git config --global user.name "thavornch"
+  #         git clone https://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@github.com/App-MaxStation/pt-maxstaion-test-api.git
+  #         cd pt-maxstaion-test-api
+  #         git checkout main
+
+  #     - name: Configure kubectl
+  #       run: |
+  #         cd pt-maxstaion-test-api
+  #         echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yaml
+  #         kubectl --kubeconfig=kubeconfig.yaml apply -f Deployment.yaml
+
+  #     # - name: Replace image to DEV yaml
+  #     #   run: | 
+  #     #     sed -i 's|IMAGE_NAME|${{ env.REGISTRY_DOCKER }}/${{ env.APP_NAME }}:${{ env.IMG_VERSION }}${{ env.RUNNUMBER}}|g' Deployment.yaml
+  #     #     cat Deployment.yaml
+
+  #     - name: Deploy to AKS
+  #       run: |
+  #         cd pt-maxstaion-test-api
+  #         sed -i 's|IMAGE_NAME|${{ env.REGISTRY_DOCKER }}/${{ env.APP_NAME }}:${{ env.IMG_VERSIONDEV }}${{ github.event.inputs.tags}}|g' Deployment.yaml
+  #         cat Deployment.yaml
+  #         kubectl --kubeconfig=kubeconfig.yaml delete -f Deployment.yaml
+  #         kubectl --kubeconfig=kubeconfig.yaml delete -f Service.yaml
+  #         kubectl --kubeconfig=kubeconfig.yaml delete -f HorizontalPodAutoscaler.yaml
+
+  #         kubectl --kubeconfig=kubeconfig.yaml apply -f Deployment.yaml
+  #         kubectl --kubeconfig=kubeconfig.yaml apply -f Service.yaml
+  #         kubectl --kubeconfig=kubeconfig.yaml apply -f HorizontalPodAutoscaler.yaml
+
+  # # Test_failure:
+  # #   runs-on: ubuntu-latest
+  # #   needs: [karate_Test]
+  # #   if: ${{ needs.karate_Test.result == 'failure' }}
+  # #   steps:
+  # #     - name: SendGrid Action
+  # #       uses: mmichailidis/sendgrid-mail-action@v1.0
+  # #       with:
+  # #         sendgrid-token: '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'
+  # #         mail: 'lattapon.ch@pt.co.th'
