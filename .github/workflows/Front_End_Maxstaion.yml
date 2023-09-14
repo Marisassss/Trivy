@@ -19,7 +19,7 @@ env:
   IMG_VERSIONUAT: ${{ vars.IMG_VERSIONUAT }}
   IMG_VERSIONPRD: ${{ vars.IMG_VERSIONPRD }}
   RUNNUMBER: ${{ github.run_number }}
-  ECR_REPOSITORY: ${{vars.APP_NAME}}
+  ECR_REPOSITORY: ${{vars.APP_NAMEFRONT}}
   IMAGE_TAG: ${{vars.IMG_VERSIONDEV}}${{ github.run_number }}
   
 jobs:
@@ -81,7 +81,9 @@ jobs:
       - name: "Build, tag, and push image to Amazon ECR"
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          
+          ECR_REPOSITORY: ${{env.APP_NAMEFRONT}}
+          IMAGE_TAG: ${{env.IMG_VERSIONDEV}}${{ github.run_number }}
+
         run: |
           new_img="$ECR_REPOSITORY:$IMAGE_TAG"
           # sed -i 's/'"$ECR_REPOSITORY.*"'/'"$new_img"'/g' ../k8s_deployment/deployment.yaml
@@ -149,8 +151,8 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          new_img="$ECR_REPOSITORY:$IMAGE_TAG"
-          # sed -i 's|IMAGE_NAME|$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g' Deployment.yaml
+          new_img="${{env.ECR_REPOSITORY}}:${{env.$IMAGE_TAG}}"
+          # sed -i 's|IMAGE_NAME|$ECR_REGISTRY/${{env.ECR_REPOSITORY}}:${{env.$IMAGE_TAG}}|g' Deployment.yaml
           sed -i 's/'"$ECR_REGISTRY.*"'/'"$new_img"'/g' Deployment.yaml
           kubectl apply -f Deployment.yaml
           kubectl apply -f Service.yaml
