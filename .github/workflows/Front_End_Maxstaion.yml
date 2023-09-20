@@ -82,7 +82,7 @@ jobs:
         run: |
           cd pt-max-station-test-repo
           new_img="$ECR_REPOSITORY:$IMAGE_TAG_DEV"
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_DEV -f DockerFile.Common .
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_DEV -f DockerFile .
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_DEV $ECR_REGISTRY/$ECR_REPOSITORY:dev
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_UAT $ECR_REGISTRY/$ECR_REPOSITORY:uat
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_DEV $ECR_REGISTRY/$ECR_REPOSITORY:latest
@@ -146,31 +146,13 @@ jobs:
         run: |
           cd pt-max-station-test-repo
           new_img="${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG_DEV}}"
-          sed -i 's|IMAGE_NAME|${{env.AWS_REGISTRY}}/${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG_DEV}}|g' Common.API/Deployment.yaml
+          sed -i 's|IMAGE_NAME|${{env.AWS_REGISTRY}}/${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG_DEV}}|g' Deployment.yaml
           # sed -i 's/'"$ECR_REGISTRY.*"'/'"$new_img"'/g' Deployment.yaml
-          kubectl apply -f Common.API/Deployment.yaml
-          kubectl apply -f Common.API/Service.yaml
-          kubectl apply -f Common.API/HorizontalPodAutoscaler.yaml
+          kubectl apply -f Deployment.yaml
+          kubectl apply -f Service.yaml
+          kubectl apply -f HorizontalPodAutoscaler.yaml
         if: success()
 
-      # - name: Configure kubectl
-      #   run: |
-      #     # cd pt-max-station-test-repo
-      #     echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yaml
-      #     kubectl --kubeconfig=kubeconfig.yaml apply -f Common.API/Deployment.yaml
-
-      # - name: Deploy to AKS
-      #   run: |
-      #     # cd pt-max-station-test-repo
-      #     sed -i 's|IMAGE_NAME|${{ env.REGISTRY_DOCKER }}/${{ env.APP_NAME }}:${{ env.IMG_VERSIONDEV }}${{ env.RUNNUMBER}}|g' Common.API/Deployment.yaml
-      #     cat Common.API/Deployment.yaml
-      #     kubectl --kubeconfig=kubeconfig.yaml delete -f Common.API/Deployment.yaml
-      #     kubectl --kubeconfig=kubeconfig.yaml delete -f Common.API/Service.yaml
-      #     kubectl --kubeconfig=kubeconfig.yaml delete -f Common.API/HorizontalPodAutoscaler.yaml
-
-      #     kubectl --kubeconfig=kubeconfig.yaml apply -f Common.API/Deployment.yaml
-      #     kubectl --kubeconfig=kubeconfig.yaml apply -f Common.API/Service.yaml
-      #     kubectl --kubeconfig=kubeconfig.yaml apply -f Common.API/HorizontalPodAutoscaler.yaml
 
   # karate_Test: 
   #   runs-on: ubuntu-latest
