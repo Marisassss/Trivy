@@ -52,7 +52,7 @@ jobs:
         run: |
           git config --global user.email "thavorn.ch@pt.co.th"
           git config --global user.name "thavornch"
-          git clone https://${{ github.TOKEN }}@github.com/App-MaxStation/pt-max-station-test-repo.git
+          git clone https://${{ secrets.GITTOKEN}}@github.com/App-MaxStation/pt-max-station-test-repo.git
           cd pt-max-station-test-repo
           git checkout main
           echo "Log level: ${{ github.event.inputs.logLevel }}"
@@ -124,7 +124,7 @@ jobs:
         run: |
           git config --global user.email "thavorn.ch@pt.co.th"
           git config --global user.name "thavornch"
-          git clone https://${{ github.TOKEN }}@github.com/App-MaxStation/pt-max-station-test-repo.git
+          git clone https://${{ secrets.GITTOKEN}}@github.com/App-MaxStation/pt-max-station-test-repo.git
           cd pt-max-station-test-repo
           git checkout main
 
@@ -225,7 +225,7 @@ jobs:
         run: |
           git config --global user.email "thavorn.ch@pt.co.th"
           git config --global user.name "thavornch"
-          git clone https://${{ github.TOKEN }}@github.com/App-MaxStation/pt-max-station-test-repo.git
+          git clone https://${{ secrets.GITTOKEN}}@github.com/App-MaxStation/pt-max-station-test-repo.git
           cd pt-max-station-test-repo
           git checkout main
 
