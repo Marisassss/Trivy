@@ -145,6 +145,7 @@ jobs:
       - name: Update Kubeconfig
         run: |
           aws eks --region ${{env.AWS_REGION}} update-kubeconfig --name ${{ secrets.CLUSTERSDEV }}
+          aws eks list-clusters
 
       - name: Deploy to EKS
         run: |
@@ -246,6 +247,7 @@ jobs:
       - name: Update Kubeconfig
         run: |
           aws eks --region ${{env.AWS_REGION}} update-kubeconfig --name ${{ secrets.CLUSTERSUAT }}
+          aws eks list-clusters
 
       - name: Deploy to EKS
         run: |
