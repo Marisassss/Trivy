@@ -250,8 +250,8 @@ jobs:
       - name: Deploy to EKS
         run: |
           cd pt-max-station-test-repo
-          new_img="${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG_DEV}}"
-          sed -i 's|IMAGE_NAME|${{env.AWS_REGISTRY}}/${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG_DEV}}|g' Deployment-uat.yaml
+          new_img="${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG_UAT}}"
+          sed -i 's|IMAGE_NAME|${{env.AWS_REGISTRY}}/${{env.ECR_REPOSITORY}}:${{env.IMAGE_TAG_UAT}}|g' Deployment-uat.yaml
           # sed -i 's/'"$ECR_REGISTRY.*"'/'"$new_img"'/g' Deployment-uat.yaml
           kubectl apply -f Deployment-uat.yaml
           kubectl apply -f Service-uat.yaml
