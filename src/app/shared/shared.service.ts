@@ -66,6 +66,21 @@ export class SharedService {
         this.urlPrice = "https://uat-maxstation.pt.co.th/price";
         this.urlCommon = "https://uat-maxstation.pt.co.th/common";
         break;
+      
+        case "devops-uat-maxstation.pt.co.th":  //uat kuber
+        this.urlInv = "https://devops-uat-maxstation.pt.co.th/inventory";
+        this.urlMas = "https://devops-uat-maxstation.pt.co.th/masterdata";
+        this.urlSale = "https://devops-uat-maxstation.pt.co.th/sale";
+        this.urlFinance = "https://devops-uat-maxstation.pt.co.th/finance";
+        this.urlReport = "https://devops-uat-maxstation.pt.co.th/report";
+        this.urlViewer = "https://devops-uat-maxstation.pt.co.th/report-viewer";
+        this.urlDailyOperation = "https://uat-pt-maxstation-dailyoperation-asv.azurewebsites.net";
+        this.urlDailyOperationApim = "https://dev-ptg-apim-services.pt.co.th/dev-max";
+        this.urlDailyAks = "https://uat-pt-maxstation-dailyoperation-asv.azurewebsites.net";
+        this.urlPostDay = "https://devops-uat-maxstation.pt.co.th/postday";
+        this.urlPrice = "https://devops-uat-maxstation.pt.co.th/price";
+        this.urlCommon = "https://devops-uat-maxstation.pt.co.th/common";
+        break;
 
       case "dev-maxstation.pt.co.th":  //dev kuber
         this.urlInv = "https://dev-maxstation.pt.co.th/inventory";
@@ -74,9 +89,9 @@ export class SharedService {
         this.urlFinance = "https://dev-maxstation.pt.co.th/finance";
         this.urlReport = "https://dev-maxstation.pt.co.th/report";
         this.urlViewer = "https://dev-maxstation.pt.co.th/report-viewer";
-        this.urlDailyOperation = "https://dev-pt-maxstation-dailyoperation-asv.azurewebsites.net";
-        this.urlDailyOperationApim = "https://dev-ptg-apim-services.pt.co.th/dev-max";
-        this.urlDailyAks = "https://dev-pt-maxstation-dailyoperation-asv.azurewebsites.net";
+        this.urlDailyOperation = "https://devops-uat-maxstation.pt.co.th/dailyoperation";
+        this.urlDailyOperationApim = "https://devops-uat-maxstation.pt.co.th/dailyoperation";
+        this.urlDailyAks = "https://devops-uat-maxstation.pt.co.th/dailyoperation";
         this.urlPostDay = "https://dev-maxstation.pt.co.th/postday";
         this.urlPrice = "https://dev-maxstation.pt.co.th/price";
         this.urlCommon = "https://dev-maxstation.pt.co.th/common";
