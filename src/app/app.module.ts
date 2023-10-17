@@ -343,7 +343,7 @@ export function tokenGetter() {
     JwtModule.forRoot({
       config: {
         tokenGetter: tokenGetter,
-        allowedDomains: ["https://localhost", "https://dev-maxstation.pt.co.th", "https://uat-maxstation.pt.co.th", "maxstation.pt.co.th"],
+        allowedDomains: ["https://localhost", "https://dev-maxstation.pt.co.th", "https://uat-maxstation.pt.co.th", "maxstation.pt.co.th", "https://devops-uat-maxstation.pt.co.th"],
         disallowedRoutes: []
       }
     })
